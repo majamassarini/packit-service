@@ -57,7 +57,7 @@ repos:
             types-PyYAML,
           ]
   - repo: https://github.com/packit/pre-commit-hooks
-    rev: 1da916777f5cc26ecf221b15e58ca51891d26d94
+    rev: 3bf9afc5ede12a4ee26e9451f306edf255749396
     hooks:
       - id: check-rebase
         args:
