@@ -523,7 +523,7 @@ class SteveJobs:
         """
         matching_jobs = []
         if isinstance(self.event, PullRequestCommentPagureEvent):
-            for job in self.event.package_config.jobs:
+            for job in self.event.package_config.get_job_views():
                 if (
                     job.type in [JobType.koji_build, JobType.bodhi_update]
                     and job.trigger == JobConfigTriggerType.commit
@@ -534,7 +534,7 @@ class SteveJobs:
                     # can be re-triggered by a Pagure comment in a PR
                     matching_jobs.append(job)
         elif isinstance(self.event, AbstractIssueCommentEvent):
-            for job in self.event.package_config.jobs:
+            for job in self.event.package_config.get_job_views():
                 if (
                     job.type in (JobType.koji_build, JobType.bodhi_update)
                     and job.trigger == JobConfigTriggerType.commit
@@ -554,7 +554,7 @@ class SteveJobs:
         Get list of non-duplicated all jobs that matches with event's trigger.
         """
         jobs_matching_trigger = []
-        for job in self.event.package_config.jobs:
+        for job in self.event.package_config.get_job_views():
             if (
                 job.trigger == self.event.job_config_trigger_type
                 and (
