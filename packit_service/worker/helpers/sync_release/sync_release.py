@@ -2,12 +2,13 @@
 # SPDX-License-Identifier: MIT
 
 import logging
-from typing import Optional, List, Set
+from typing import Optional, List, Set, Union, Dict
 
 from ogr.abstract import GitProject
 
 from packit.config import JobType, PackageConfig, JobConfig, JobConfigTriggerType
 from packit.config.aliases import get_branches
+from packit.constants import OPEN_PULL_REQUEST_FOR_KEY
 from packit_service.config import ServiceConfig
 from packit_service.models import ProjectEventModel
 from packit_service.trigger_mapping import are_job_types_same
@@ -51,13 +52,12 @@ class SyncReleaseHelper(BaseJobHelper):
         """
         raise NotImplementedError("Use subclass.")
 
-    @property
-    def branches(self) -> Set[str]:
+    def _get_branches(self, aliases: Union[List, Dict, Set]) -> Set[str]:
         """
-        Return all valid branches from config.
+        Return all valid branches from given aliases strs.
         """
         branches = get_branches(
-            *self.job.dist_git_branches,
+            *aliases,
             default_dg_branch=self.default_dg_branch,
             default=self.default_dg_branch,
         )
@@ -66,6 +66,52 @@ class SyncReleaseHelper(BaseJobHelper):
             branches = branches & self.branches_override
 
         return branches
+
+    @property
+    def branches(self) -> Set[str]:
+        """
+        Return all valid branches from config.
+        """
+        return self._get_branches(self.job.dist_git_branches)
+
+    def get_fast_forward_branches_from(self, source_branch: str) -> Set[str]:
+        """
+        Returns a list of target branches that can be fast forwarded merging
+        the specified source_branch
+        The keys can be aliases, expand them into a temporary structure
+        to be sure that source_branch can be found in the first dictionary.
+        In the inner loop of the downstream sync the expanded aliases are used.
+
+        @WARNING If a key alias will be expanded in more than a key, a branch
+        and a PR will be created for every each of them. The user sould choose
+        which one to close or merge.
+
+        The branches should be specified as in the following example
+            {"rawhide": {"open_pull_request_for": ["f40", "f39"]},
+             "epel9": {}
+            }
+
+        source_branch: source branch with commits to be merged
+        """
+        if not isinstance(self.job.dist_git_branches, dict):
+            return set()
+
+        expanded_dist_git_branches = {}
+        for key, value in self.job.dist_git_branches.items():
+            expanded_keys = self._get_branches([key])
+            expanded_dist_git_branches.update(
+                {expanded_key: value for expanded_key in expanded_keys}
+            )
+
+        if source_branch not in expanded_dist_git_branches:
+            return set()
+
+        if (
+            source_branch_dict := expanded_dist_git_branches[source_branch]
+        ) and isinstance(source_branch_dict[OPEN_PULL_REQUEST_FOR_KEY], list):
+            return self._get_branches(source_branch_dict[OPEN_PULL_REQUEST_FOR_KEY])
+
+        return set()
 
     @property
     def job(self) -> Optional[JobConfig]:
