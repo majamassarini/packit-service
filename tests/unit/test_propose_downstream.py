@@ -13,7 +13,7 @@ from packit_service.worker.helpers.sync_release.propose_downstream import (
 
 
 @pytest.mark.parametrize(
-    "jobs,job_config_trigger_type,branches_override,branches,fast_forwardable_branches",
+    "jobs,job_config_trigger_type,branches_override,branches,ff_branches, all_ff_branches",
     [
         pytest.param(
             [
@@ -31,6 +31,7 @@ from packit_service.worker.helpers.sync_release.propose_downstream import (
             None,
             {"main", "f34"},
             {"main": set(), "f34": set()},
+            set(),
         ),
         pytest.param(
             [
@@ -48,6 +49,7 @@ from packit_service.worker.helpers.sync_release.propose_downstream import (
             {"main"},
             {"main"},
             {"main": set()},
+            set(),
         ),
         pytest.param(
             [
@@ -65,6 +67,7 @@ from packit_service.worker.helpers.sync_release.propose_downstream import (
             {"f35"},
             {"f35"},
             {"f35": set()},
+            set(),
         ),
         pytest.param(
             [
@@ -78,6 +81,7 @@ from packit_service.worker.helpers.sync_release.propose_downstream import (
             None,
             {"main"},
             {"main": set()},
+            set(),
         ),
         pytest.param(
             [
@@ -99,6 +103,7 @@ from packit_service.worker.helpers.sync_release.propose_downstream import (
             None,
             {"main", "f35", "f34"},
             {"main": {"f33"}, "f35": set(), "f34": set()},
+            {"f33"},
         ),
         pytest.param(
             [
@@ -121,6 +126,29 @@ from packit_service.worker.helpers.sync_release.propose_downstream import (
             None,
             {"f39", "f40"},
             {"f39": {"f39", "f40"}, "f40": {"f39", "f40"}},
+            {"f39", "f40"},
+        ),
+        pytest.param(
+            [
+                JobConfig(
+                    type=JobType.propose_downstream,
+                    trigger=JobConfigTriggerType.release,
+                    packages={
+                        "package": CommonPackageConfig(
+                            # no sense but possible!
+                            dist_git_branches={
+                                "f41": {"open_pull_request_for": ["f40", "f39"]},
+                                "f38": {"open_pull_request_for": ["f37"]},
+                            },
+                        )
+                    },
+                ),
+            ],
+            JobConfigTriggerType.release,
+            {"f41", "f40"},
+            {"f41"},
+            {"f41": {"f40"}},
+            {"f40"},
         ),
     ],
 )
@@ -130,7 +158,8 @@ def test_branches(
     job_config_trigger_type,
     branches_override,
     branches,
-    fast_forwardable_branches,
+    ff_branches,
+    all_ff_branches,
 ):
     project = flexmock(
         default_branch="main",
@@ -153,6 +182,7 @@ def test_branches(
     assert propose_downstream_helper.branches == branches
     for source_branch in branches:
         assert (
-            propose_downstream_helper.get_fast_forward_branches_from(source_branch)
-            == fast_forwardable_branches[source_branch]
+            propose_downstream_helper.get_ff_branches_from(source_branch)
+            == ff_branches[source_branch]
         )
+        assert propose_downstream_helper.ff_branches == all_ff_branches
