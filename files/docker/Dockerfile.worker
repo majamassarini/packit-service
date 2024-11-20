@@ -15,6 +15,9 @@ ENV USER=packit \
 # Ansible doesn't like /tmp
 WORKDIR /src
 
+# Allow remote debugging
+RUN pip install --upgrade debugpy
+
 COPY files/install-deps-worker.yaml ./files/
 COPY files/tasks/ ./files/tasks/
 RUN ansible-playbook -vv -c local -i localhost, files/install-deps-worker.yaml \
@@ -32,5 +35,13 @@ RUN git rev-parse HEAD >/.packit-service.git.commit.hash \
     && ansible-playbook -vv -c local -i localhost, files/recipe-worker.yaml \
     && rm -rf /src/*
 # /src content is no longer needed, clean it for 'hardly'
+
+COPY token_ogr.patch token_ogr.patch
+RUN ls /usr/lib/python3.9/
+RUN ls /usr/lib/python3.9/site-packages/
+RUN ls /usr/lib/python3.9/site-packages/ogr
+RUN patch --verbose -p0 /usr/lib/python3.9/site-packages/ogr/services/github/service.py token_ogr.patch
+
+#COPY projects_allowed_packit.patch projects_allowed_packit.patch
 
 CMD ["/usr/bin/run_worker.sh"]

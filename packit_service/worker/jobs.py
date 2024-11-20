@@ -12,11 +12,10 @@ from re import match
 from typing import Callable, Optional, Union
 
 import celery
-from ogr.exceptions import GithubAppNotInstalledError
+
 from packit.config import JobConfig, JobConfigTriggerType, JobConfigView, JobType
 from packit.config.job_config import DEPRECATED_JOB_TYPES
 from packit.utils import nested_get
-
 from packit_service.config import PackageConfig, PackageConfigGetter, ServiceConfig
 from packit_service.constants import (
     COMMENT_REACTION,
@@ -29,7 +28,6 @@ from packit_service.utils import (
     get_packit_commands_from_comment,
     pr_labels_match_configuration,
 )
-from packit_service.worker.allowlist import Allowlist
 from packit_service.worker.events import (
     CheckRerunEvent,
     Event,
@@ -202,22 +200,22 @@ class SteveJobs:
         Returns:
             List of processing task results.
         """
-        try:
-            if not self.is_project_public_or_enabled_private():
-                return []
-        except GithubAppNotInstalledError:
-            host, namespace, repo = (
-                self.event.project.service.hostname,
-                self.event.project.namespace,
-                self.event.project.repo,
-            )
-            logger.info(
-                "Packit is not installed on %s/%s/%s, skipping.",
-                host,
-                namespace,
-                repo,
-            )
-            return []
+        # try:
+        #    if not self.is_project_public_or_enabled_private():
+        #        return []
+        # except GithubAppNotInstalledError:
+        #    host, namespace, repo = (
+        #        self.event.project.service.hostname,
+        #        self.event.project.namespace,
+        #        self.event.project.repo,
+        #    )
+        #    logger.info(
+        #        "Packit is not installed on %s/%s/%s, skipping.",
+        #        host,
+        #        namespace,
+        #        repo,
+        #    )
+        #    return []
 
         processing_results = None
 
@@ -529,7 +527,7 @@ class SteveJobs:
             )
             return []
 
-        allowlist = Allowlist(service_config=self.service_config)
+        # allowlist = Allowlist(service_config=self.service_config)
         processing_results: list[TaskResults] = []
 
         statuses_check_feedback: list[datetime] = []
@@ -542,20 +540,20 @@ class SteveJobs:
 
             # check allowlist approval for every job to be able to track down which jobs
             # failed because of missing allowlist approval
-            if not allowlist.check_and_report(
-                self.event,
-                self.event.project,
-                job_configs=job_configs,
-            ):
-                return [
-                    TaskResults.create_from(
-                        success=False,
-                        msg="Account is not allowlisted!",
-                        job_config=job_config,
-                        event=self.event,
-                    )
-                    for job_config in job_configs
-                ]
+            # if not allowlist.check_and_report(
+            #    self.event,
+            #    self.event.project,
+            #    job_configs=job_configs,
+            # ):
+            #    return [
+            #        TaskResults.create_from(
+            #            success=False,
+            #            msg="Account is not allowlisted!",
+            #            job_config=job_config,
+            #            event=self.event,
+            #        )
+            #        for job_config in job_configs
+            #    ]
 
             processing_results.extend(
                 self.create_tasks(job_configs, handler_kls, statuses_check_feedback),
@@ -632,13 +630,13 @@ class SteveJobs:
         Returns:
             Whether the task should be created.
         """
-        if self.service_config.deployment not in job_config.packit_instances:
-            logger.debug(
-                f"Current deployment ({self.service_config.deployment}) "
-                f"does not match the job configuration ({job_config.packit_instances}). "
-                "The job will not be run.",
-            )
-            return False
+        # if self.service_config.deployment not in job_config.packit_instances:
+        #    logger.debug(
+        #        f"Current deployment ({self.service_config.deployment}) "
+        #        f"does not match the job configuration ({job_config.packit_instances}). "
+        #        "The job will not be run.",
+        #    )
+        #    return False
 
         if not handler_kls.pre_check(
             package_config=(

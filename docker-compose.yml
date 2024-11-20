@@ -81,11 +81,14 @@ services:
       - tokman
       - redis
       - postgres
+    ports:
+      - 5678:5678
     environment:
       DEPLOYMENT: dev
+      PACKIT_HOME: /home/packit
       REDIS_SERVICE_HOST: redis
       APP: packit_service.worker.tasks
-      KRB5CCNAME: FILE:/tmp/krb5cc_packit
+      KRB5CCNAME: "DIR:/home/packit/kerberos/"
       POSTGRESQL_USER: packit
       POSTGRESQL_PASSWORD: secret-password
       POSTGRESQL_HOST: postgres
