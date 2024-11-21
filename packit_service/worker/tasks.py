@@ -11,11 +11,11 @@ from celery import Task
 from celery._state import get_current_task
 from celery.signals import after_setup_logger
 from ogr import __version__ as ogr_version
-from packit import __version__ as packit_version
-from packit.exceptions import PackitException
 from sqlalchemy import __version__ as sqlal_version
 from syslog_rfc5424_formatter import RFC5424Formatter
 
+from packit import __version__ as packit_version
+from packit.exceptions import PackitException
 from packit_service import __version__ as ps_version
 from packit_service.celerizer import celery_app
 from packit_service.constants import (
@@ -183,7 +183,7 @@ class BodhiTaskWithRetry(TaskWithRetry):
     bind=True,
     # set a lower time limit for process message as for other tasks
     # https://docs.celeryq.dev/en/stable/reference/celery.app.task.html#celery.app.task.Task.time_limit
-    time_limit=300,
+    time_limit=3600,
     base=TaskWithRetry,
 )
 def process_message(
