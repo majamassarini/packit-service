@@ -4,6 +4,7 @@
 import logging
 from typing import Optional
 
+import requests
 from ogr.abstract import CommitStatus
 from ogr.exceptions import GithubAPIException
 from ogr.services.github import GithubProject
@@ -132,7 +133,7 @@ class StatusReporterGithubChecks(StatusReporterGithubStatuses):
                 conclusion=conclusion,
                 output=create_github_check_run_output(description, summary),
             )
-        except GithubAPIException as e:
+        except (GithubAPIException, requests.exceptions.RetryError) as e:
             logger.debug(
                 f"Failed to set status check, setting status as a fallback: {e!s}",
             )
