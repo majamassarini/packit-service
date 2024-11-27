@@ -12,8 +12,8 @@ from typing import Optional, Union
 
 from ogr.abstract import GitProject, PullRequest
 from ogr.parsing import RepoUrl
-from packit.config import JobConfigTriggerType, PackageConfig
 
+from packit.config import JobConfigTriggerType, PackageConfig
 from packit_service.config import PackageConfigGetter, ServiceConfig
 from packit_service.models import (
     AbstractProjectObjectDbType,
@@ -119,16 +119,25 @@ class EventData:
         time = event.get("task_accepted_time")
         task_accepted_time = datetime.fromtimestamp(time, timezone.utc) if time else None
 
-        build_targets_override = (
-            {(target, identifier_) for [target, identifier_] in event.get("build_targets_override")}
-            if event.get("build_targets_override")
-            else set()
-        )
-        tests_targets_override = (
-            {(target, identifier_) for [target, identifier_] in event.get("tests_targets_override")}
-            if event.get("tests_targets_override")
-            else set()
-        )
+        try:
+            build_targets_override = (
+                {
+                    (target, identifier_)
+                    for [target, identifier_] in event.get("build_targets_override")
+                }
+                if event.get("build_targets_override")
+                else set()
+            )
+            tests_targets_override = (
+                {
+                    (target, identifier_)
+                    for [target, identifier_] in event.get("tests_targets_override")
+                }
+                if event.get("tests_targets_override")
+                else set()
+            )
+        except ValueError:
+            raise
         branches_override = event.get("branches_override")
 
         return EventData(

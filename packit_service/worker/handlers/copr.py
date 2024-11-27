@@ -8,13 +8,13 @@ from typing import Optional
 from celery import Task, signature
 from ogr.services.github import GithubProject
 from ogr.services.gitlab import GitlabProject
+
 from packit.config import (
     JobConfig,
     JobConfigTriggerType,
     JobType,
 )
 from packit.config.package_config import PackageConfig
-
 from packit_service import sentry_integration
 from packit_service.constants import (
     COPR_API_SUCC_STATE,
@@ -298,16 +298,16 @@ class CoprBuildEndHandler(AbstractCoprBuildReportHandler):
             logger.warning(msg)
             return TaskResults(success=False, details={"msg": msg})
 
-        if self.build.status in [
-            BuildStatus.success,
-            BuildStatus.failure,
-        ]:
-            msg = (
-                f"Copr build {self.copr_event.build_id} is already"
-                f" processed (status={self.copr_event.build.status})."
-            )
-            logger.info(msg)
-            return TaskResults(success=True, details={"msg": msg})
+        # if self.build.status in [
+        #    BuildStatus.success,
+        #    BuildStatus.failure,
+        # ]:
+        #    msg = (
+        #        f"Copr build {self.copr_event.build_id} is already"
+        #        f" processed (status={self.copr_event.build.status})."
+        #    )
+        #    logger.info(msg)
+        #    return TaskResults(success=True, details={"msg": msg})
 
         self.set_end_time()
         self.set_srpm_url()
