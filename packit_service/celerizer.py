@@ -1578,6 +1578,281 @@ comment_retest_failed_3jobs = """
 }
 """
 
+comment_retest_failed_build_no_found = """
+{
+  "action": "created",
+  "issue": {
+    "url": "https://api.github.com/repos/packit/hello-world/issues/2119",
+    "repository_url": "https://api.github.com/repos/packit/hello-world",
+    "labels_url": "https://api.github.com/repos/packit/hello-world/issues/2119/labels{/name}",
+    "comments_url": "https://api.github.com/repos/packit/hello-world/issues/2119/comments",
+    "events_url": "https://api.github.com/repos/packit/hello-world/issues/2119/events",
+    "html_url": "https://github.com/packit/hello-world/pull/2119",
+    "id": 2181757140,
+    "node_id": "PR_kwDOCwFO9M5pYoI6",
+    "number": 2119,
+    "title": "Create a setup with two different tests",
+    "user": {
+      "login": "majamassarini",
+      "id": 2678400,
+      "node_id": "MDQ6VXNlcjI2Nzg0MDA=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/2678400?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/majamassarini",
+      "html_url": "https://github.com/majamassarini",
+      "followers_url": "https://api.github.com/users/majamassarini/followers",
+      "following_url": "https://api.github.com/users/majamassarini/following{/other_user}",
+      "gists_url": "https://api.github.com/users/majamassarini/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/majamassarini/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/majamassarini/subscriptions",
+      "organizations_url": "https://api.github.com/users/majamassarini/orgs",
+      "repos_url": "https://api.github.com/users/majamassarini/repos",
+      "events_url": "https://api.github.com/users/majamassarini/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/majamassarini/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "labels": [
+
+    ],
+    "state": "open",
+    "locked": false,
+    "assignee": null,
+    "assignees": [
+
+    ],
+    "milestone": null,
+    "comments": 25,
+    "created_at": "2024-03-12T14:24:41Z",
+    "updated_at": "2024-12-02T09:17:45Z",
+    "closed_at": null,
+    "author_association": "MEMBER",
+    "active_lock_reason": null,
+    "draft": false,
+    "pull_request": {
+      "url": "https://api.github.com/repos/packit/hello-world/pulls/2119",
+      "html_url": "https://github.com/packit/hello-world/pull/2119",
+      "diff_url": "https://github.com/packit/hello-world/pull/2119.diff",
+      "patch_url": "https://github.com/packit/hello-world/pull/2119.patch",
+      "merged_at": null
+    },
+    "body": null,
+    "reactions": {
+      "url": "https://api.github.com/repos/packit/hello-world/issues/2119/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "timeline_url": "https://api.github.com/repos/packit/hello-world/issues/2119/timeline",
+    "performed_via_github_app": null,
+    "state_reason": null
+  },
+  "comment": {
+    "url": "https://api.github.com/repos/packit/hello-world/issues/comments/2510979301",
+    "html_url": "https://github.com/packit/hello-world/pull/2119#issuecomment-2510979301",
+    "issue_url": "https://api.github.com/repos/packit/hello-world/issues/2119",
+    "id": 2510979301,
+    "node_id": "IC_kwDOCwFO9M6VqoDl",
+    "user": {
+      "login": "majamassarini",
+      "id": 2678400,
+      "node_id": "MDQ6VXNlcjI2Nzg0MDA=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/2678400?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/majamassarini",
+      "html_url": "https://github.com/majamassarini",
+      "followers_url": "https://api.github.com/users/majamassarini/followers",
+      "following_url": "https://api.github.com/users/majamassarini/following{/other_user}",
+      "gists_url": "https://api.github.com/users/majamassarini/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/majamassarini/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/majamassarini/subscriptions",
+      "organizations_url": "https://api.github.com/users/majamassarini/orgs",
+      "repos_url": "https://api.github.com/users/majamassarini/repos",
+      "events_url": "https://api.github.com/users/majamassarini/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/majamassarini/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "created_at": "2024-12-02T09:17:44Z",
+    "updated_at": "2024-12-02T09:17:44Z",
+    "author_association": "MEMBER",
+    "body": "/packit-stg retest-failed",
+    "reactions": {
+      "url": "https://api.github.com/repos/packit/hello-world/issues/comments/2510979301/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "performed_via_github_app": null
+  },
+  "repository": {
+    "id": 184635124,
+    "node_id": "MDEwOlJlcG9zaXRvcnkxODQ2MzUxMjQ=",
+    "name": "hello-world",
+    "full_name": "packit/hello-world",
+    "private": false,
+    "owner": {
+      "login": "packit",
+      "id": 46870917,
+      "node_id": "MDEyOk9yZ2FuaXphdGlvbjQ2ODcwOTE3",
+      "avatar_url": "https://avatars.githubusercontent.com/u/46870917?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/packit",
+      "html_url": "https://github.com/packit",
+      "followers_url": "https://api.github.com/users/packit/followers",
+      "following_url": "https://api.github.com/users/packit/following{/other_user}",
+      "gists_url": "https://api.github.com/users/packit/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/packit/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/packit/subscriptions",
+      "organizations_url": "https://api.github.com/users/packit/orgs",
+      "repos_url": "https://api.github.com/users/packit/repos",
+      "events_url": "https://api.github.com/users/packit/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/packit/received_events",
+      "type": "Organization",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "html_url": "https://github.com/packit/hello-world",
+    "description": "The most progresive command-line tool in the world.",
+    "fork": false,
+    "url": "https://api.github.com/repos/packit/hello-world",
+    "forks_url": "https://api.github.com/repos/packit/hello-world/forks",
+    "keys_url": "https://api.github.com/repos/packit/hello-world/keys{/key_id}",
+    "collaborators_url": "https://api.github.com/repos/packit/hello-world/collaborators{/collaborator}",
+    "teams_url": "https://api.github.com/repos/packit/hello-world/teams",
+    "hooks_url": "https://api.github.com/repos/packit/hello-world/hooks",
+    "issue_events_url": "https://api.github.com/repos/packit/hello-world/issues/events{/number}",
+    "events_url": "https://api.github.com/repos/packit/hello-world/events",
+    "assignees_url": "https://api.github.com/repos/packit/hello-world/assignees{/user}",
+    "branches_url": "https://api.github.com/repos/packit/hello-world/branches{/branch}",
+    "tags_url": "https://api.github.com/repos/packit/hello-world/tags",
+    "blobs_url": "https://api.github.com/repos/packit/hello-world/git/blobs{/sha}",
+    "git_tags_url": "https://api.github.com/repos/packit/hello-world/git/tags{/sha}",
+    "git_refs_url": "https://api.github.com/repos/packit/hello-world/git/refs{/sha}",
+    "trees_url": "https://api.github.com/repos/packit/hello-world/git/trees{/sha}",
+    "statuses_url": "https://api.github.com/repos/packit/hello-world/statuses/{sha}",
+    "languages_url": "https://api.github.com/repos/packit/hello-world/languages",
+    "stargazers_url": "https://api.github.com/repos/packit/hello-world/stargazers",
+    "contributors_url": "https://api.github.com/repos/packit/hello-world/contributors",
+    "subscribers_url": "https://api.github.com/repos/packit/hello-world/subscribers",
+    "subscription_url": "https://api.github.com/repos/packit/hello-world/subscription",
+    "commits_url": "https://api.github.com/repos/packit/hello-world/commits{/sha}",
+    "git_commits_url": "https://api.github.com/repos/packit/hello-world/git/commits{/sha}",
+    "comments_url": "https://api.github.com/repos/packit/hello-world/comments{/number}",
+    "issue_comment_url": "https://api.github.com/repos/packit/hello-world/issues/comments{/number}",
+    "contents_url": "https://api.github.com/repos/packit/hello-world/contents/{+path}",
+    "compare_url": "https://api.github.com/repos/packit/hello-world/compare/{base}...{head}",
+    "merges_url": "https://api.github.com/repos/packit/hello-world/merges",
+    "archive_url": "https://api.github.com/repos/packit/hello-world/{archive_format}{/ref}",
+    "downloads_url": "https://api.github.com/repos/packit/hello-world/downloads",
+    "issues_url": "https://api.github.com/repos/packit/hello-world/issues{/number}",
+    "pulls_url": "https://api.github.com/repos/packit/hello-world/pulls{/number}",
+    "milestones_url": "https://api.github.com/repos/packit/hello-world/milestones{/number}",
+    "notifications_url": "https://api.github.com/repos/packit/hello-world/notifications{?since,all,participating}",
+    "labels_url": "https://api.github.com/repos/packit/hello-world/labels{/name}",
+    "releases_url": "https://api.github.com/repos/packit/hello-world/releases{/id}",
+    "deployments_url": "https://api.github.com/repos/packit/hello-world/deployments",
+    "created_at": "2019-05-02T18:54:46Z",
+    "updated_at": "2023-01-31T17:16:23Z",
+    "pushed_at": "2024-12-02T04:47:18Z",
+    "git_url": "git://github.com/packit/hello-world.git",
+    "ssh_url": "git@github.com:packit/hello-world.git",
+    "clone_url": "https://github.com/packit/hello-world.git",
+    "svn_url": "https://github.com/packit/hello-world",
+    "homepage": null,
+    "size": 188,
+    "stargazers_count": 4,
+    "watchers_count": 4,
+    "language": "Python",
+    "has_issues": true,
+    "has_projects": true,
+    "has_downloads": true,
+    "has_wiki": true,
+    "has_pages": false,
+    "has_discussions": false,
+    "forks_count": 23,
+    "mirror_url": null,
+    "archived": false,
+    "disabled": false,
+    "open_issues_count": 98,
+    "license": {
+      "key": "mit",
+      "name": "MIT License",
+      "spdx_id": "MIT",
+      "url": "https://api.github.com/licenses/mit",
+      "node_id": "MDc6TGljZW5zZTEz"
+    },
+    "allow_forking": true,
+    "is_template": false,
+    "web_commit_signoff_required": false,
+    "topics": [
+
+    ],
+    "visibility": "public",
+    "forks": 23,
+    "open_issues": 98,
+    "watchers": 4,
+    "default_branch": "main",
+    "custom_properties": {
+
+    }
+  },
+  "organization": {
+    "login": "packit",
+    "id": 46870917,
+    "node_id": "MDEyOk9yZ2FuaXphdGlvbjQ2ODcwOTE3",
+    "url": "https://api.github.com/orgs/packit",
+    "repos_url": "https://api.github.com/orgs/packit/repos",
+    "events_url": "https://api.github.com/orgs/packit/events",
+    "hooks_url": "https://api.github.com/orgs/packit/hooks",
+    "issues_url": "https://api.github.com/orgs/packit/issues",
+    "members_url": "https://api.github.com/orgs/packit/members{/member}",
+    "public_members_url": "https://api.github.com/orgs/packit/public_members{/member}",
+    "avatar_url": "https://avatars.githubusercontent.com/u/46870917?v=4",
+    "description": "Packit service: package it in an automated way."
+  },
+  "sender": {
+    "login": "majamassarini",
+    "id": 2678400,
+    "node_id": "MDQ6VXNlcjI2Nzg0MDA=",
+    "avatar_url": "https://avatars.githubusercontent.com/u/2678400?v=4",
+    "gravatar_id": "",
+    "url": "https://api.github.com/users/majamassarini",
+    "html_url": "https://github.com/majamassarini",
+    "followers_url": "https://api.github.com/users/majamassarini/followers",
+    "following_url": "https://api.github.com/users/majamassarini/following{/other_user}",
+    "gists_url": "https://api.github.com/users/majamassarini/gists{/gist_id}",
+    "starred_url": "https://api.github.com/users/majamassarini/starred{/owner}{/repo}",
+    "subscriptions_url": "https://api.github.com/users/majamassarini/subscriptions",
+    "organizations_url": "https://api.github.com/users/majamassarini/orgs",
+    "repos_url": "https://api.github.com/users/majamassarini/repos",
+    "events_url": "https://api.github.com/users/majamassarini/events{/privacy}",
+    "received_events_url": "https://api.github.com/users/majamassarini/received_events",
+    "type": "User",
+    "user_view_type": "public",
+    "site_admin": false
+  },
+  "installation": {
+    "id": 1924121,
+    "node_id": "MDIzOkludGVncmF0aW9uSW5zdGFsbGF0aW9uMTkyNDEyMQ=="
+  }
+}
+"""
+
 # pull_request_synchronize = json.loads(pull_request_synchronize)
 copr_build_end_chroot_rawhide_copr_rawhide_ok = json.loads(
     copr_build_end_chroot_rawhide_copr_rawhide_ok
@@ -1593,6 +1868,7 @@ copr_build_end_chroot_rawhide_copr_latest_ok = json.loads(
 )
 comment_retest_failed = json.loads(comment_retest_failed)
 comment_retest_failed_3jobs = json.loads(comment_retest_failed_3jobs)
+comment_retest_failed_build_no_found = json.loads(comment_retest_failed_build_no_found)
 srpm_rawhide_ok = json.loads(srpm_rawhide_ok)
 check_rerun_requested = json.loads(check_rerun_requested)
 
@@ -1637,5 +1913,5 @@ celery_app: Celery = Proxy(get_celery_application)
 
 celery_app.send_task(
     name="task.steve_jobs.process_message",
-    kwargs={"event": comment_retest_failed_3jobs},
+    kwargs={"event": comment_retest_failed_build_no_found},
 )
