@@ -15,6 +15,9 @@ ENV USER=packit \
 # Ansible doesn't like /tmp
 WORKDIR /src
 
+# Allow remote debugging
+RUN pip install --upgrade debugpy
+
 COPY files/install-deps-worker.yaml ./files/
 COPY files/tasks/ ./files/tasks/
 RUN ansible-playbook -vv -c local -i localhost, files/install-deps-worker.yaml \
@@ -36,5 +39,17 @@ RUN git rev-parse HEAD >/.packit-service.git.commit.hash \
 # prepopulate fedora-distro-aliases cache
 RUN python3 -c 'from fedora_distro_aliases import get_distro_aliases; get_distro_aliases(cache=True)' \
     && chmod 0666 ~/.cache/fedora-distro-aliases/cache.json
+
+COPY token_ogr.patch token_ogr.patch
+RUN PYTHON_VERSION=$(python3 --version | cut -d' ' -f2 | cut -d'.' -f1,2) && \
+    PYTHON_LIB="/usr/lib/python3.${PYTHON_VERSION#*.}/site-packages" && \
+    if [ -d "${PYTHON_LIB}/ogr" ]; then \
+        ls ${PYTHON_LIB}/ogr && \
+        patch --verbose -p0 ${PYTHON_LIB}/ogr/services/github/service.py token_ogr.patch; \
+    else \
+        echo "Warning: ogr not found at ${PYTHON_LIB}/ogr, skipping patch"; \
+    fi
+
+#COPY projects_allowed_packit.patch projects_allowed_packit.patch
 
 CMD ["/usr/bin/run_worker.sh"]

@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: MIT
 
 import logging
-import re
 
 from packit.config.aliases import get_branches
 
@@ -276,29 +275,29 @@ class ValidInformationForPullFromUpstream(Checker, GetPagurePullRequestMixin):
 
 class IsUpstreamTagMatchingConfig(Checker):
     def pre_check(self) -> bool:
-        tag = self.data.tag_name
+        # tag = self.data.tag_name
 
-        # if the tag in event is None (pull-from-upstream retriggering), we will filter
-        # only matching tags in the handler directly
-        if not tag:
-            return True
+        ## if the tag in event is None (pull-from-upstream retriggering), we will filter
+        ## only matching tags in the handler directly
+        # if not tag:
+        #    return True
 
-        if upstream_tag_include := self.job_config.upstream_tag_include:
-            matching_include_regex = re.match(upstream_tag_include, tag)
-            if not matching_include_regex:
-                logger.info(
-                    f"Tag {tag} doesn't match the upstream_tag_include {upstream_tag_include} "
-                    f"from the config. Skipping the syncing.",
-                )
-                return False
+        # if upstream_tag_include := self.job_config.upstream_tag_include:
+        #    matching_include_regex = re.match(upstream_tag_include, tag)
+        #    if not matching_include_regex:
+        #        logger.info(
+        #            f"Tag {tag} doesn't match the upstream_tag_include {upstream_tag_include} "
+        #            f"from the config. Skipping the syncing."
+        #        )
+        #        return False
 
-        if upstream_tag_exclude := self.job_config.upstream_tag_exclude:
-            matching_exclude_regex = re.match(upstream_tag_exclude, tag)
-            if matching_exclude_regex:
-                logger.info(
-                    f"Tag {tag} matches the upstream_tag_exclude {upstream_tag_exclude} "
-                    f"from the config. Skipping the syncing.",
-                )
-                return False
+        # if upstream_tag_exclude := self.job_config.upstream_tag_exclude:
+        #    matching_exclude_regex = re.match(upstream_tag_exclude, tag)
+        #    if matching_exclude_regex:
+        #        logger.info(
+        #            f"Tag {tag} matches the upstream_tag_exclude {upstream_tag_exclude} "
+        #            f"from the config. Skipping the syncing."
+        #        )
+        #        return False
 
         return True
