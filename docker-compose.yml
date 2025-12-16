@@ -81,11 +81,14 @@ services:
       - tokman
       - redis
       - postgres
+    ports:
+      - 5678:5678
     environment:
       DEPLOYMENT: dev
+      PACKIT_HOME: /home/packit
       REDIS_SERVICE_HOST: redis
       APP: packit_service.worker.tasks
-      KRB5CCNAME: FILE:/tmp/krb5cc_packit
+      KRB5CCNAME: "DIR:/home/packit/kerberos/"
       POSTGRESQL_USER: packit
       POSTGRESQL_PASSWORD: secret-password
       POSTGRESQL_HOST: postgres
@@ -95,6 +98,7 @@ services:
       AWS_ACCESS_KEY_ID: ""
       AWS_SECRET_ACCESS_KEY: ""
       GIT_SSH_COMMAND: "ssh -F /home/packit/.ssh/config"
+      PACKIT_USER_AGENT: "packit.dev/packit-dev (hello@packit.dev)"
       #SQLALCHEMY_ECHO: 1
     volumes:
       - ../packit/packit:/usr/local/lib/python3.13/site-packages/packit:ro,z

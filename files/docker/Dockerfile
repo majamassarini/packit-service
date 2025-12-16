@@ -32,6 +32,9 @@ RUN git rev-parse HEAD >/.packit-service.git.commit.hash \
 COPY alembic.ini ./
 COPY alembic/ ./alembic/
 
+# Allow remote debugging
+RUN pip install --upgrade debugpy
+
 EXPOSE 8443
 
 CMD ["/usr/bin/run_httpd.sh"]
