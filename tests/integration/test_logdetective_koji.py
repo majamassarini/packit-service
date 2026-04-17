@@ -10,6 +10,7 @@ import requests
 from flexmock import Mock, flexmock
 from packit.config.common_package_config import Deployment
 
+import packit_service.worker.helpers.logdetective as logdetective_module
 from packit_service.config import FedoraCISettings, ServiceConfig
 from packit_service.constants import LOGDETECTIVE_PACKIT_SERVER_URL
 from packit_service.events import koji
@@ -101,6 +102,7 @@ def test_logdetective_koji_build_scratch_downstream(
             },
         ).one_by_one()
         flexmock(requests).should_receive("post").and_return(mock_ld_response)
+        flexmock(logdetective_module).should_receive("verify_artifact").and_return(True)
 
     mock_group_run = flexmock(id=1)
     flexmock(LogDetectiveRunGroupModel).should_receive("create").times(
