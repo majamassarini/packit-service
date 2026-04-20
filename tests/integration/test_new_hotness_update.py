@@ -497,21 +497,7 @@ def test_new_hotness_update_non_git_multiple_versions(new_hotness_update):
         .should_receive("comment")
         .mock()
     )
-    # sync_release should be called once per version
-    flexmock(PackitAPI).should_receive("sync_release").with_args(
-        dist_git_branch="main",
-        versions=["7.0.3"],
-        create_pr=True,
-        local_pr_branch_suffix="update-pull_from_upstream",
-        use_downstream_specfile=True,
-        add_pr_instructions=True,
-        resolved_bugs=["rhbz#2106196"],
-        release_monitoring_project_id=4181,
-        sync_acls=True,
-        pr_description_footer=DistgitAnnouncement.get_announcement(),
-        add_new_sources=True,
-        fast_forward_merge_branches=set(),
-    ).and_return((pr, {})).once()
+    # sync_release should be called once per version, highest version first
     flexmock(PackitAPI).should_receive("sync_release").with_args(
         dist_git_branch="main",
         versions=["7.0.4"],
@@ -525,7 +511,21 @@ def test_new_hotness_update_non_git_multiple_versions(new_hotness_update):
         pr_description_footer=DistgitAnnouncement.get_announcement(),
         add_new_sources=True,
         fast_forward_merge_branches=set(),
-    ).and_return((pr, {})).once()
+    ).and_return((pr, {})).once().ordered()
+    flexmock(PackitAPI).should_receive("sync_release").with_args(
+        dist_git_branch="main",
+        versions=["7.0.3"],
+        create_pr=True,
+        local_pr_branch_suffix="update-pull_from_upstream",
+        use_downstream_specfile=True,
+        add_pr_instructions=True,
+        resolved_bugs=["rhbz#2106196"],
+        release_monitoring_project_id=4181,
+        sync_acls=True,
+        pr_description_footer=DistgitAnnouncement.get_announcement(),
+        add_new_sources=True,
+        fast_forward_merge_branches=set(),
+    ).and_return((pr, {})).once().ordered()
     flexmock(PackitAPI).should_receive("clean")
 
     for model, sync_release_model in [
