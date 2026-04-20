@@ -544,7 +544,14 @@ class AbstractSyncReleaseHandler(
         all_errors = {}
 
         try:
-            for tag, version in self._get_releases_to_sync():
+            # sort the releases starting from highest/newest as a workaround
+            # for cases where there is a borked release followed by a fixup one
+            # and we want to process the fixup first
+            for tag, version in sorted(
+                self._get_releases_to_sync(),
+                key=lambda tv: cmp_to_key(compare_versions)(tv[0] or tv[1]),
+                reverse=True,
+            ):
                 errors = self._run_for_release(tag=tag, version=version)
                 all_errors.update(errors)
         except AbortSyncRelease:
