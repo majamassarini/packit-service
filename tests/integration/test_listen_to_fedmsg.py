@@ -2600,8 +2600,22 @@ def test_koji_build_end(koji_build_scratch_end, pc_koji_build_pr, koji_build_pr)
     assert first_dict_value(results["job"])["success"]
 
 
+@pytest.mark.parametrize(
+    "koji_target, distro, compose, extra_context, profile",
+    [
+        pytest.param("rawhide", "fedora-rawhide", "Fedora-Rawhide", {}, "fedora-43", id="rawhide"),
+        pytest.param("eln", "fedora-eln", "Fedora-ELN", {"variant": "eln"}, "fedora-eln", id="eln"),
+    ],
+)
 def test_koji_build_end_downstream(
-    koji_build_scratch_end, pc_koji_build_pr, koji_build_pr_downstream
+    koji_build_scratch_end,
+    pc_koji_build_pr,
+    koji_build_pr_downstream,
+    koji_target,
+    distro,
+    compose,
+    extra_context,
+    profile,
 ):
     service_config = (
         flexmock(
@@ -2636,7 +2650,7 @@ def test_koji_build_end_downstream(
         .mock()
     )
     flexmock(ServiceConfig).should_receive("get_service_config").and_return(service_config)
-    koji_build_pr_downstream.target = "rawhide"
+    koji_build_pr_downstream.target = koji_target
     flexmock(GithubProject).should_receive("is_private").and_return(False)
     flexmock(koji.result.Task).should_receive("get_packages_config").and_return(
         pc_koji_build_pr,
@@ -2672,9 +2686,9 @@ def test_koji_build_end_downstream(
         "environments": [
             {
                 "arch": "x86_64",
-                "os": {"compose": "Fedora-Rawhide"},
+                "os": {"compose": compose},
                 "variables": {
-                    "PROFILE_NAME": "fedora-43",
+                    "PROFILE_NAME": profile,
                     "TASK_ID": "1",
                 },
             },
@@ -2703,11 +2717,12 @@ def test_koji_build_end_downstream(
                 ],
                 "tmt": {
                     "context": {
-                        "distro": "fedora-rawhide",
+                        "distro": distro,
                         "arch": "x86_64",
                         "trigger": "commit",
                         "initiator": "fedora-ci",
                         "dist-git-branch": "rawhide",
+                        **extra_context,
                     },
                 },
             },
@@ -2753,7 +2768,7 @@ def test_koji_build_end_downstream(
         "environments": [
             {
                 "arch": "x86_64",
-                "os": {"compose": "Fedora-Rawhide"},
+                "os": {"compose": compose},
                 "variables": {
                     "KOJI_TASK_ID": "1",
                 },
@@ -2765,11 +2780,12 @@ def test_koji_build_end_downstream(
                 ],
                 "tmt": {
                     "context": {
-                        "distro": "fedora-rawhide",
+                        "distro": distro,
                         "arch": "x86_64",
                         "trigger": "commit",
                         "initiator": "fedora-ci",
                         "dist-git-branch": "rawhide",
+                        **extra_context,
                     },
                 },
             },
@@ -2783,13 +2799,13 @@ def test_koji_build_end_downstream(
     }
 
     flexmock(aliases).should_receive("get_aliases").and_return({"fedora-all": [], "epel-all": []})
-    flexmock(aliases).should_receive("get_build_targets").with_args("rawhide").and_return(
-        ["fedora-rawhide-x86_64"]
+    flexmock(aliases).should_receive("get_build_targets").with_args(koji_target).and_return(
+        [f"{distro}-x86_64"]
     )
 
     flexmock(TestingFarmClient).should_receive("distro2compose").with_args(
-        "fedora-rawhide",
-    ).and_return("Fedora-Rawhide")
+        distro,
+    ).and_return(compose)
 
     flexmock(KojiHelper).should_receive("get_candidate_tag").with_args("rawhide").and_return(
         "f43-updates-candidate"
@@ -2842,7 +2858,7 @@ def test_koji_build_end_downstream(
             id=5,
             koji_builds=[koji_build_pr_downstream],
             status=TestingFarmResult.new,
-            target="fedora-rawhide",
+            target=distro,
             data={"fedora_ci_test": "installability"},
         )
         .should_receive("set_pipeline_id")
@@ -2855,7 +2871,7 @@ def test_koji_build_end_downstream(
             id=6,
             koji_builds=[koji_build_pr_downstream],
             status=TestingFarmResult.new,
-            target="fedora-rawhide",
+            target=distro,
             data={"fedora_ci_test": "custom"},
         )
         .should_receive("set_pipeline_id")
@@ -2868,7 +2884,7 @@ def test_koji_build_end_downstream(
             id=7,
             koji_builds=[koji_build_pr_downstream],
             status=TestingFarmResult.new,
-            target="fedora-rawhide",
+            target=distro,
             data={"fedora_ci_test": "rpminspect"},
         )
         .should_receive("set_pipeline_id")
@@ -2881,7 +2897,7 @@ def test_koji_build_end_downstream(
             id=8,
             koji_builds=[koji_build_pr_downstream],
             status=TestingFarmResult.new,
-            target="fedora-rawhide",
+            target=distro,
             data={"fedora_ci_test": "rpmlint"},
         )
         .should_receive("set_pipeline_id")
@@ -2905,7 +2921,7 @@ def test_koji_build_end_downstream(
         pipeline_id=None,
         identifier=None,
         status=TestingFarmResult.new,
-        target="fedora-rawhide",
+        target=distro,
         web_url=None,
         test_run_group=group,
         koji_build_targets=[koji_build_pr_downstream],
@@ -2918,7 +2934,7 @@ def test_koji_build_end_downstream(
         pipeline_id=None,
         identifier=None,
         status=TestingFarmResult.new,
-        target="fedora-rawhide",
+        target=distro,
         web_url=None,
         test_run_group=group,
         koji_build_targets=[koji_build_pr_downstream],
@@ -2931,7 +2947,7 @@ def test_koji_build_end_downstream(
         pipeline_id=None,
         identifier=None,
         status=TestingFarmResult.new,
-        target="fedora-rawhide",
+        target=distro,
         web_url=None,
         test_run_group=group,
         koji_build_targets=[koji_build_pr_downstream],
@@ -2944,7 +2960,7 @@ def test_koji_build_end_downstream(
         pipeline_id=None,
         identifier=None,
         status=TestingFarmResult.new,
-        target="fedora-rawhide",
+        target=distro,
         web_url=None,
         test_run_group=group,
         koji_build_targets=[koji_build_pr_downstream],
@@ -2960,63 +2976,63 @@ def test_koji_build_end_downstream(
         description="RPM build succeeded.",
         url=url,
         check_name="Packit-stg - scratch build",
-        target_branch="rawhide",
+        target_branch=koji_target,
     ).once()
     flexmock(StatusReporter).should_receive("set_status").with_args(
         state=BaseCommitStatus.running,
         description="Submitting the tests ...",
         url="https://dashboard.localhost/jobs/testing-farm/5",
         check_name="Packit-stg - installability",
-        target_branch="rawhide",
+        target_branch=koji_target,
     ).once()
     flexmock(StatusReporter).should_receive("set_status").with_args(
         state=BaseCommitStatus.running,
         description="Tests have been submitted ...",
         url="https://dashboard.localhost/jobs/testing-farm/5",
         check_name="Packit-stg - installability",
-        target_branch="rawhide",
+        target_branch=koji_target,
     ).once()
     flexmock(StatusReporter).should_receive("set_status").with_args(
         state=BaseCommitStatus.running,
         description="Submitting the tests ...",
         url="https://dashboard.localhost/jobs/testing-farm/6",
         check_name="Packit-stg - custom",
-        target_branch="rawhide",
+        target_branch=koji_target,
     ).once()
     flexmock(StatusReporter).should_receive("set_status").with_args(
         state=BaseCommitStatus.running,
         description="Tests have been submitted ...",
         url="https://dashboard.localhost/jobs/testing-farm/6",
         check_name="Packit-stg - custom",
-        target_branch="rawhide",
+        target_branch=koji_target,
     ).once()
     flexmock(StatusReporter).should_receive("set_status").with_args(
         state=BaseCommitStatus.running,
         description="Submitting the tests ...",
         url="https://dashboard.localhost/jobs/testing-farm/7",
         check_name="Packit-stg - rpminspect",
-        target_branch="rawhide",
+        target_branch=koji_target,
     ).once()
     flexmock(StatusReporter).should_receive("set_status").with_args(
         state=BaseCommitStatus.running,
         description="Tests have been submitted ...",
         url="https://dashboard.localhost/jobs/testing-farm/7",
         check_name="Packit-stg - rpminspect",
-        target_branch="rawhide",
+        target_branch=koji_target,
     ).once()
     flexmock(StatusReporter).should_receive("set_status").with_args(
         state=BaseCommitStatus.running,
         description="Submitting the tests ...",
         url="https://dashboard.localhost/jobs/testing-farm/8",
         check_name="Packit-stg - rpmlint",
-        target_branch="rawhide",
+        target_branch=koji_target,
     ).once()
     flexmock(StatusReporter).should_receive("set_status").with_args(
         state=BaseCommitStatus.running,
         description="Tests have been submitted ...",
         url="https://dashboard.localhost/jobs/testing-farm/8",
         check_name="Packit-stg - rpmlint",
-        target_branch="rawhide",
+        target_branch=koji_target,
     ).once()
 
     urls.DASHBOARD_URL = "https://dashboard.localhost"

@@ -1590,6 +1590,17 @@ class DownstreamTestingFarmJobHelper:
         if self.koji_build:
             variables["KOJI_TASK_ID"] = self.koji_build.task_id
             artifacts.append({"id": self.koji_build.task_id, "type": "fedora-koji-build"})
+
+        context = {
+            "distro": distro,
+            "arch": "x86_64",
+            "trigger": "commit",
+            "initiator": "fedora-ci",
+            "dist-git-branch": dist_git_branch,
+        }
+        if dist_git_branch == "rawhide" and distro == "fedora-eln":
+            context["variant"] = "eln"
+
         return {
             "environments": [
                 {
@@ -1598,13 +1609,7 @@ class DownstreamTestingFarmJobHelper:
                     "variables": variables,
                     "artifacts": artifacts,
                     "tmt": {
-                        "context": {
-                            "distro": distro,
-                            "arch": "x86_64",
-                            "trigger": "commit",
-                            "initiator": "fedora-ci",
-                            "dist-git-branch": dist_git_branch,
-                        }
+                        "context": context,
                     },
                 },
             ],
