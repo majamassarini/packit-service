@@ -16,7 +16,10 @@ from packit.config import JobConfig, JobType, aliases
 from packit.config.package_config import PackageConfig
 
 from packit_service.config import ServiceConfig
-from packit_service.constants import FEDORA_CI_TESTS_NS_BRANCH
+from packit_service.constants import (
+    BASE_RETRY_INTERVAL_IN_MINUTES_FOR_OUTAGES,
+    FEDORA_CI_TESTS_NS_BRANCH,
+)
 from packit_service.events import (
     abstract,
     github,
@@ -302,10 +305,35 @@ class TestingFarmHandler(
     ):
         if self.celery_task.retries == 0:
             self.pushgateway.test_runs_queued.inc()
-        result = self.testing_farm_job_helper.run_testing_farm(
-            test_run=test_run,
-            build=build,
-        )
+        try:
+            result = self.testing_farm_job_helper.run_testing_farm(
+                test_run=test_run,
+                build=build,
+            )
+        except Exception as exc:
+            if self.celery_task.is_last_try():
+                test_run.set_status(TestingFarmResult.error)
+                self.testing_farm_job_helper.report_status_to_tests_for_test_target(
+                    state=BaseCommitStatus.failure,
+                    description="Failed to submit tests.",
+                    target=test_run.target,
+                    markdown_content=str(exc),
+                )
+            else:
+                test_run.set_status(TestingFarmResult.retry)
+                interval = BASE_RETRY_INTERVAL_IN_MINUTES_FOR_OUTAGES * 2**self.celery_task.retries
+                self.testing_farm_job_helper.report_status_to_tests_for_test_target(
+                    state=BaseCommitStatus.pending,
+                    description="Failed to submit tests. The task will be"
+                    f" retried in {interval}"
+                    f" {'minute' if interval == 1 else 'minutes'}.",
+                    target=test_run.target,
+                    markdown_content=str(exc),
+                )
+                kargs = self.celery_task.task.request.kwargs.copy()
+                kargs["testing_farm_target_id"] = test_run.id
+                self.celery_task.retry(delay=interval * 60, kargs=kargs)
+            return
         if not result["success"]:
             failed[test_run.target] = result.get("details")
 
@@ -486,7 +514,30 @@ class DownstreamTestingFarmHandler(
     ):
         if self.celery_task.retries == 0:
             self.pushgateway.fedora_ci_test_runs_queued.inc()
-        result = self.downstream_testing_farm_job_helper.run_testing_farm(test_run)
+        try:
+            result = self.downstream_testing_farm_job_helper.run_testing_farm(test_run)
+        except Exception as exc:
+            if self.celery_task.is_last_try():
+                test_run.set_status(TestingFarmResult.error)
+                self.downstream_testing_farm_job_helper.report(
+                    test_run=test_run,
+                    state=BaseCommitStatus.failure,
+                    description=f"Failed to submit tests: {exc}",
+                )
+            else:
+                test_run.set_status(TestingFarmResult.retry)
+                interval = BASE_RETRY_INTERVAL_IN_MINUTES_FOR_OUTAGES * 2**self.celery_task.retries
+                self.downstream_testing_farm_job_helper.report(
+                    test_run=test_run,
+                    state=BaseCommitStatus.pending,
+                    description="Failed to submit tests. The task will be"
+                    f" retried in {interval}"
+                    f" {'minute' if interval == 1 else 'minutes'}.",
+                )
+                kargs = self.celery_task.task.request.kwargs.copy()
+                kargs["testing_farm_target_id"] = test_run.id
+                self.celery_task.retry(delay=interval * 60, kargs=kargs)
+            return
         if not result["success"]:
             failed[test_run.data["fedora_ci_test"]] = result.get("details")
 

@@ -900,6 +900,7 @@ class TestingFarmJobHelper(CoprBuildJobHelper):
         pipeline_id = response.json()["id"]
         logger.info(f"Request {pipeline_id} submitted to testing farm.")
         test_run.set_pipeline_id(pipeline_id)
+        test_run.set_status(TestingFarmResult.queued)
 
         if additional_build:
             test_run.add_copr_build(additional_build)
@@ -1633,6 +1634,7 @@ class DownstreamTestingFarmJobHelper:
         pipeline_id = response.json()["id"]
         logger.info(f"Request {pipeline_id} submitted to testing farm.")
         test_run.set_pipeline_id(pipeline_id)
+        test_run.set_status(TestingFarmResult.queued)
 
         self.report(
             test_run=test_run,
