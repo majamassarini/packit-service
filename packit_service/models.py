@@ -2204,6 +2204,8 @@ class CoprBuildGroupModel(ProjectAndEventsConnector, GroupModel, Base):
         project_event_type: ProjectEventModelType,
         event_id: int,
         created_before: Optional[datetime] = None,
+        identifier: Optional[str] = None,
+        targets: Optional[set[str]] = None,
     ) -> Iterable["CoprBuildTargetModel"]:
         """Get list of currently running Copr builds for a given project object
         (e.g. a PR or branch).
@@ -2214,6 +2216,11 @@ class CoprBuildGroupModel(ProjectAndEventsConnector, GroupModel, Base):
             created_before: If set, only return builds whose pipeline was
                 created at or before this datetime (used to avoid cancelling
                 builds from the current trigger batch).
+            identifier: Only return builds matching this identifier.
+                When None, filters for builds with no identifier (IS NULL).
+            targets: If set, only return builds whose target/chroot is
+                in this set. Used to scope cancellation to specific
+                targets during check re-runs or rebuild-failed.
 
         Returns:
             An iterable over Copr target models that are currently in queue
@@ -2235,6 +2242,9 @@ class CoprBuildGroupModel(ProjectAndEventsConnector, GroupModel, Base):
             )
             if created_before is not None:
                 q = q.filter(PipelineModel.datetime <= created_before)
+            q = q.filter(CoprBuildTargetModel.identifier == identifier)
+            if targets is not None:
+                q = q.filter(CoprBuildTargetModel.target.in_(targets))
             return q
 
 
@@ -2667,6 +2677,7 @@ class KojiBuildGroupModel(ProjectAndEventsConnector, GroupModel, Base):
         project_event_type: ProjectEventModelType,
         event_id: int,
         created_before: Optional[datetime] = None,
+        targets: Optional[set[str]] = None,
     ) -> Iterable["KojiBuildTargetModel"]:
         """Get running Koji builds for a given project object (e.g. a PR or branch).
 
@@ -2676,6 +2687,9 @@ class KojiBuildGroupModel(ProjectAndEventsConnector, GroupModel, Base):
             created_before: If set, only return builds whose pipeline was
                 created at or before this datetime (used to avoid cancelling
                 builds from the current trigger batch).
+            targets: If set, only return builds whose target is in this set.
+                Used to scope cancellation to specific targets during
+                check re-runs.
 
         Returns:
             An iterable over KojiBuildTargetModels in non-final states.
@@ -2694,6 +2708,8 @@ class KojiBuildGroupModel(ProjectAndEventsConnector, GroupModel, Base):
             )
             if created_before is not None:
                 q = q.filter(PipelineModel.datetime <= created_before)
+            if targets is not None:
+                q = q.filter(KojiBuildTargetModel.target.in_(targets))
             return q
 
 

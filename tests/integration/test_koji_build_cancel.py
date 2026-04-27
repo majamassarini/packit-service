@@ -496,6 +496,7 @@ def test_downstream_koji_build_cancel_uses_event_based_filtering(monkeypatch):
         project_event_type=ProjectEventModelType.branch_push,
         event_id=9,
         created_before=cutoff_time,
+        targets=None,
     ).and_return([]).once()
 
     distgit_commit = json.loads(
