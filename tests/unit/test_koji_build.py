@@ -605,6 +605,48 @@ def test_get_koji_rpm_build_web_url(id_, result):
     assert koji.result.Task.get_koji_rpm_build_web_url(rpm_build_task_id=id_) == result
 
 
+def test_get_running_jobs_check_rerun_passes_targets(github_pr_event):
+    """Check re-run on koji-build:f41 should pass targets={'f41'}."""
+    helper = build_helper(
+        event=github_pr_event,
+        build_targets_override={("f41", None)},
+    )
+    helper.metadata.cancel_cutoff_time = flexmock()
+    helper.db_project_event = flexmock(
+        type="pull_request",
+        event_id=42,
+    )
+    sentinel = [flexmock()]
+    flexmock(KojiBuildGroupModel).should_receive("get_running").with_args(
+        project_event_type="pull_request",
+        event_id=42,
+        created_before=helper.metadata.cancel_cutoff_time,
+        targets={"f41"},
+    ).and_return(sentinel).once()
+    assert list(helper.get_running_jobs()) == sentinel
+
+
+def test_get_running_jobs_comment_trigger_no_targets(github_pr_event):
+    """/packit build should pass targets=None (cancel all)."""
+    helper = build_helper(
+        event=github_pr_event,
+        build_targets_override=None,
+    )
+    helper.metadata.cancel_cutoff_time = flexmock()
+    helper.db_project_event = flexmock(
+        type="pull_request",
+        event_id=42,
+    )
+    sentinel = [flexmock()]
+    flexmock(KojiBuildGroupModel).should_receive("get_running").with_args(
+        project_event_type="pull_request",
+        event_id=42,
+        created_before=helper.metadata.cancel_cutoff_time,
+        targets=None,
+    ).and_return(sentinel).once()
+    assert list(helper.get_running_jobs()) == sentinel
+
+
 def test_cancel_running_builds():
     build1 = flexmock(task_id="111", id=1, target="f41")
     build2 = flexmock(task_id="222", id=2, target="f42")

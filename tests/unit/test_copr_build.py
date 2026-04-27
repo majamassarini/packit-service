@@ -1039,3 +1039,73 @@ def test_check_if_actor_can_run_job_and_report(jobs, should_pass):
         )
         == should_pass
     )
+
+
+def test_get_running_jobs_check_rerun_passes_identifier_and_targets(github_pr_event):
+    """Check re-run on rpm-build:fedora-rawhide-x86_64 should pass
+    identifier and targets={'fedora-rawhide-x86_64'}."""
+    helper = build_helper(
+        event=github_pr_event,
+        build_targets_override={("fedora-rawhide-x86_64", None)},
+    )
+    helper.metadata.cancel_cutoff_time = flexmock()
+    helper.db_project_event = flexmock(
+        type="pull_request",
+        event_id=42,
+    )
+    sentinel = [flexmock()]
+    flexmock(CoprBuildGroupModel).should_receive("get_running").with_args(
+        project_event_type="pull_request",
+        event_id=42,
+        created_before=helper.metadata.cancel_cutoff_time,
+        identifier=None,
+        targets={"fedora-rawhide-x86_64"},
+    ).and_return(sentinel).once()
+    assert list(helper.get_running_jobs()) == sentinel
+
+
+def test_get_running_jobs_comment_trigger_no_targets(github_pr_event):
+    """/packit build should pass identifier and targets=None (cancel all)."""
+    helper = build_helper(
+        event=github_pr_event,
+        build_targets_override=None,
+    )
+    helper.metadata.cancel_cutoff_time = flexmock()
+    helper.db_project_event = flexmock(
+        type="pull_request",
+        event_id=42,
+    )
+    sentinel = [flexmock()]
+    flexmock(CoprBuildGroupModel).should_receive("get_running").with_args(
+        project_event_type="pull_request",
+        event_id=42,
+        created_before=helper.metadata.cancel_cutoff_time,
+        identifier=None,
+        targets=None,
+    ).and_return(sentinel).once()
+    assert list(helper.get_running_jobs()) == sentinel
+
+
+def test_get_running_jobs_rebuild_failed_passes_targets(github_pr_event):
+    """rebuild-failed with multiple failed targets should pass all targets."""
+    helper = build_helper(
+        event=github_pr_event,
+        build_targets_override={
+            ("fedora-rawhide-x86_64", None),
+            ("fedora-40-x86_64", None),
+        },
+    )
+    helper.metadata.cancel_cutoff_time = flexmock()
+    helper.db_project_event = flexmock(
+        type="pull_request",
+        event_id=42,
+    )
+    sentinel = [flexmock()]
+    flexmock(CoprBuildGroupModel).should_receive("get_running").with_args(
+        project_event_type="pull_request",
+        event_id=42,
+        created_before=helper.metadata.cancel_cutoff_time,
+        identifier=None,
+        targets={"fedora-rawhide-x86_64", "fedora-40-x86_64"},
+    ).and_return(sentinel).once()
+    assert list(helper.get_running_jobs()) == sentinel

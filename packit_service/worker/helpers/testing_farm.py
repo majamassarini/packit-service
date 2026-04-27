@@ -1243,12 +1243,23 @@ class TestingFarmJobHelper(CoprBuildJobHelper):
                 "to avoid canceling unrelated jobs."
             )
             return
+
+        targets = None
+        if self.tests_targets_override is not None:
+            targets = {
+                t for t, ident in self.tests_targets_override if ident == self.job_config.identifier
+            }
+            if not targets:
+                return
+
         yield from TFTTestRunGroupModel.get_running(
             project_event_type=self.db_project_event.type,
             event_id=self.db_project_event.event_id,
             ranch=self.tft_client.default_ranch,
             created_before=self.metadata.cancel_cutoff_time,
             has_copr_build=not self.skip_build,
+            identifier=self.job_config.identifier,
+            targets=targets,
         )
 
     def cancel_running_tests(self):

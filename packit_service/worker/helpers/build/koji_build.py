@@ -238,10 +238,17 @@ class KojiBuildJobHelper(BaseBuildJobHelper):
                 "to avoid canceling unrelated jobs."
             )
             return
+        targets = None
+        if self.build_targets_override is not None:
+            targets = {t for t, _ in self.build_targets_override}
+            if not targets:
+                return
+
         yield from KojiBuildGroupModel.get_running(
             project_event_type=self.db_project_event.type,
             event_id=self.db_project_event.event_id,
             created_before=self.metadata.cancel_cutoff_time,
+            targets=targets,
         )
 
     def cancel_running_builds(

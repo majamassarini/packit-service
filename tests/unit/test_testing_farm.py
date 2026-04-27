@@ -2346,3 +2346,176 @@ def test_parse_comment_arguments(
     assert helper.comment_arguments.identifier == expected_identifier
     assert helper.comment_arguments.labels == expected_labels
     assert helper.comment_arguments.envs == expected_envs
+
+
+class TestGetRunningJobs:
+    """Tests for TFJobHelper.get_running_jobs() cancel-scoping logic."""
+
+    @staticmethod
+    def _make_helper(
+        identifier=None,
+        tests_targets_override=None,
+        skip_build=False,
+        cancel_cutoff_time=datetime(2025, 1, 1, tzinfo=timezone.utc),
+    ):
+        job_config = JobConfig(
+            trigger=JobConfigTriggerType.pull_request,
+            type=JobType.tests,
+            packages={
+                "package": CommonPackageConfig(
+                    identifier=identifier,
+                    skip_build=skip_build,
+                    _targets=["fedora-42-x86_64", "fedora-43-x86_64"],
+                ),
+            },
+        )
+        metadata = flexmock(
+            cancel_cutoff_time=cancel_cutoff_time,
+            event_dict={"comment": "/packit test"},
+        )
+        db_project_event = (
+            flexmock(
+                type=ProjectEventModelType.pull_request,
+                event_id=42,
+            )
+            .should_receive("get_project_event_object")
+            .and_return(
+                flexmock(job_config_trigger_type=JobConfigTriggerType.pull_request),
+            )
+            .mock()
+        )
+        helper = TFJobHelper(
+            service_config=flexmock(
+                comment_command_prefix="/packit",
+                deployment=Deployment.prod,
+            ),
+            package_config=flexmock(jobs=[]),
+            project=flexmock(),
+            metadata=metadata,
+            db_project_event=db_project_event,
+            job_config=job_config,
+            tests_targets_override=tests_targets_override,
+        )
+        helper._tft_client = flexmock(default_ranch="public")
+        return helper
+
+    def test_no_db_project_event(self):
+        helper = self._make_helper()
+        helper.db_project_event = None
+        assert list(helper.get_running_jobs()) == []
+
+    def test_no_cancel_cutoff_time(self):
+        helper = self._make_helper(cancel_cutoff_time=None)
+        assert list(helper.get_running_jobs()) == []
+
+    def test_check_rerun_passes_identifier_and_target(self):
+        """Re-running testing-farm:fedora-43-x86_64:full should pass both
+        identifier='full' and targets={'fedora-43-x86_64'}."""
+        helper = self._make_helper(
+            identifier="full",
+            tests_targets_override={("fedora-43-x86_64", "full")},
+        )
+        sentinel = [flexmock()]
+        flexmock(TFTTestRunGroupModel).should_receive("get_running").with_args(
+            project_event_type=ProjectEventModelType.pull_request,
+            event_id=42,
+            ranch="public",
+            created_before=helper.metadata.cancel_cutoff_time,
+            has_copr_build=True,
+            identifier="full",
+            targets={"fedora-43-x86_64"},
+        ).and_return(sentinel).once()
+        assert list(helper.get_running_jobs()) == sentinel
+
+    def test_retest_failed_passes_identifier_and_multiple_targets(self):
+        """retest-failed with multiple failed targets for the same identifier
+        should pass all of them in the targets set."""
+        helper = self._make_helper(
+            identifier="full",
+            tests_targets_override={
+                ("fedora-42-x86_64", "full"),
+                ("fedora-43-x86_64", "full"),
+            },
+        )
+        sentinel = [flexmock()]
+        flexmock(TFTTestRunGroupModel).should_receive("get_running").with_args(
+            project_event_type=ProjectEventModelType.pull_request,
+            event_id=42,
+            ranch="public",
+            created_before=helper.metadata.cancel_cutoff_time,
+            has_copr_build=True,
+            identifier="full",
+            targets={"fedora-42-x86_64", "fedora-43-x86_64"},
+        ).and_return(sentinel).once()
+        assert list(helper.get_running_jobs()) == sentinel
+
+    def test_comment_trigger_passes_identifier_only(self):
+        """/packit test --identifier full should pass identifier='full'
+        but targets=None (cancel all targets for that identifier)."""
+        helper = self._make_helper(
+            identifier="full",
+            tests_targets_override=None,
+        )
+        sentinel = [flexmock()]
+        flexmock(TFTTestRunGroupModel).should_receive("get_running").with_args(
+            project_event_type=ProjectEventModelType.pull_request,
+            event_id=42,
+            ranch="public",
+            created_before=helper.metadata.cancel_cutoff_time,
+            has_copr_build=True,
+            identifier="full",
+            targets=None,
+        ).and_return(sentinel).once()
+        assert list(helper.get_running_jobs()) == sentinel
+
+    def test_comment_trigger_no_identifier(self):
+        """/packit test (no identifier) should pass identifier=None
+        and targets=None."""
+        helper = self._make_helper(
+            identifier=None,
+            tests_targets_override=None,
+        )
+        sentinel = [flexmock()]
+        flexmock(TFTTestRunGroupModel).should_receive("get_running").with_args(
+            project_event_type=ProjectEventModelType.pull_request,
+            event_id=42,
+            ranch="public",
+            created_before=helper.metadata.cancel_cutoff_time,
+            has_copr_build=True,
+            identifier=None,
+            targets=None,
+        ).and_return(sentinel).once()
+        assert list(helper.get_running_jobs()) == sentinel
+
+    def test_override_with_different_identifier_returns_early(self):
+        """If tests_targets_override contains targets for a different identifier,
+        get_running_jobs should return early without querying."""
+        helper = self._make_helper(
+            identifier="full",
+            tests_targets_override={("fedora-43-x86_64", "sanity")},
+        )
+        flexmock(TFTTestRunGroupModel).should_receive("get_running").never()
+        assert list(helper.get_running_jobs()) == []
+
+    def test_cancel_running_tests_calls_cancel_and_sets_status(self):
+        run1 = flexmock(pipeline_id="abc-123")
+        run2 = flexmock(pipeline_id="def-456")
+        run1.should_receive("set_status").with_args(
+            TestingFarmResult.cancel_requested,
+        ).once()
+        run2.should_receive("set_status").with_args(
+            TestingFarmResult.cancel_requested,
+        ).once()
+
+        helper = self._make_helper(identifier="full")
+        flexmock(helper).should_receive("get_running_jobs").and_return([run1, run2])
+        helper._tft_client.should_receive("cancel").with_args("abc-123").once()
+        helper._tft_client.should_receive("cancel").with_args("def-456").once()
+
+        helper.cancel_running_tests()
+
+    def test_cancel_running_tests_noop_when_nothing_running(self):
+        helper = self._make_helper(identifier="full")
+        flexmock(helper).should_receive("get_running_jobs").and_return([])
+        helper._tft_client.should_receive("cancel").never()
+        helper.cancel_running_tests()
