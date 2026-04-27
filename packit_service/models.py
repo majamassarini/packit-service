@@ -3671,6 +3671,8 @@ class TFTTestRunGroupModel(ProjectAndEventsConnector, GroupModel, Base):
         ranch: str,
         created_before: Optional[datetime] = None,
         has_copr_build: Optional[bool] = None,
+        identifier: Optional[str] = None,
+        targets: Optional[set[str]] = None,
     ) -> Iterable["TFTTestRunTargetModel"]:
         """Get list of currently running Testing Farm runs for a given project
         object (e.g. a PR or branch).
@@ -3685,6 +3687,13 @@ class TFTTestRunGroupModel(ProjectAndEventsConnector, GroupModel, Base):
             has_copr_build: If set, filter by whether the test run's pipeline
                 is associated with a Copr build group. `True` returns only runs
                 linked to a Copr build, `False` returns only runs without one.
+            identifier: Only return test runs matching this identifier
+                (e.g. "full", "sanity"). When None, filters for test runs
+                with no identifier (IS NULL).
+            targets: If set, only return test runs whose target/chroot is
+                in this set (e.g. {"fedora-43-x86_64"}). Used to scope
+                cancellation to specific targets during check re-runs
+                or retest-failed.
 
         Returns:
             An iterable over TFT target models that reprepresent matching TF
@@ -3714,6 +3723,9 @@ class TFTTestRunGroupModel(ProjectAndEventsConnector, GroupModel, Base):
                 q = q.filter(PipelineModel.copr_build_group_id.isnot(None))
             elif has_copr_build is False:
                 q = q.filter(PipelineModel.copr_build_group_id.is_(None))
+            q = q.filter(TFTTestRunTargetModel.identifier == identifier)
+            if targets is not None:
+                q = q.filter(TFTTestRunTargetModel.target.in_(targets))
             return q
 
 
