@@ -21,7 +21,7 @@ from packit.config import (
 )
 from packit.copr_helper import CoprHelper
 from packit.distgit import DistGit
-from packit.exceptions import PackitConfigException
+from packit.exceptions import PackitConfigException, PackitException
 from packit.local_project import LocalProject, LocalProjectBuilder
 from packit.upstream import GitUpstream
 from packit.utils import commands
@@ -912,7 +912,7 @@ def test_pr_test_command_handler_identifiers(
     "retry_number,description,markdown_content,status,response,delay",
     (
         [
-            (
+            pytest.param(
                 0,
                 "Failed to submit tests. The task will be retried in 1 minute.",
                 "Reason",
@@ -925,8 +925,9 @@ def test_pr_test_command_handler_identifiers(
                     reason="Reason",
                 ),
                 60,
+                id="http_500_first_try",
             ),
-            (
+            pytest.param(
                 1,
                 "Failed to submit tests. The task will be retried in 2 minutes.",
                 "Reason",
@@ -939,8 +940,9 @@ def test_pr_test_command_handler_identifiers(
                     reason="Reason",
                 ),
                 120,
+                id="http_500_second_try",
             ),
-            (
+            pytest.param(
                 2,
                 "Failed to submit tests: reason.",
                 None,
@@ -953,6 +955,34 @@ def test_pr_test_command_handler_identifiers(
                     reason="reason",
                 ),
                 None,
+                id="http_500_last_try",
+            ),
+            pytest.param(
+                0,
+                "Failed to submit tests. The task will be retried in 1 minute.",
+                "Cannot connect to url 'https://api.testing-farm.io'",
+                BaseCommitStatus.pending,
+                PackitException("Cannot connect to url 'https://api.testing-farm.io'"),
+                60,
+                id="exception_first_try",
+            ),
+            pytest.param(
+                1,
+                "Failed to submit tests. The task will be retried in 2 minutes.",
+                "Cannot connect to url 'https://api.testing-farm.io'",
+                BaseCommitStatus.pending,
+                PackitException("Cannot connect to url 'https://api.testing-farm.io'"),
+                120,
+                id="exception_second_try",
+            ),
+            pytest.param(
+                2,
+                "Failed to submit tests.",
+                "Cannot connect to url 'https://api.testing-farm.io'",
+                BaseCommitStatus.failure,
+                PackitException("Cannot connect to url 'https://api.testing-farm.io'"),
+                None,
+                id="exception_last_try",
             ),
         ]
     ),
@@ -1020,6 +1050,7 @@ def test_pr_test_command_handler_retries(
         {"fedora-rawhide-x86_64"},
     )
     flexmock(TestingFarmJobHelper).should_receive("get_latest_copr_build").never()
+    is_exception_case = isinstance(response, Exception)
     flexmock(Pushgateway).should_receive("push").times(2).and_return()
 
     payload = {
@@ -1069,13 +1100,16 @@ def test_pr_test_command_handler_retries(
     }
 
     flexmock(TestingFarmJobHelper).should_receive("is_fmf_configured").and_return(True)
-    flexmock(TestingFarmClient).should_receive("distro2compose").and_return(
-        "Fedora-Rawhide",
-    )
 
-    flexmock(TestingFarmClient).should_receive(
-        "send_testing_farm_request",
-    ).with_args(endpoint="requests", method="POST", data=payload).and_return(response)
+    if is_exception_case:
+        flexmock(TestingFarmClient).should_receive("distro2compose").and_raise(response)
+    else:
+        flexmock(TestingFarmClient).should_receive("distro2compose").and_return(
+            "Fedora-Rawhide",
+        )
+        flexmock(TestingFarmClient).should_receive(
+            "send_testing_farm_request",
+        ).with_args(endpoint="requests", method="POST", data=payload).and_return(response)
 
     flexmock(StatusReporterGithubChecks).should_receive("set_status").with_args(
         state=BaseCommitStatus.pending,
@@ -1128,14 +1162,15 @@ def test_pr_test_command_handler_retries(
             TestingFarmResult.retry,
         ).once()
 
-    flexmock(StatusReporterGithubChecks).should_receive("set_status").with_args(
-        state=status,
-        description=description,
-        check_name="testing-farm:fedora-rawhide-x86_64",
-        url="",
-        markdown_content=markdown_content,
-        links_to_external_services=None,
-    ).once()
+    if description is not None:
+        flexmock(StatusReporterGithubChecks).should_receive("set_status").with_args(
+            state=status,
+            description=description,
+            check_name="testing-farm:fedora-rawhide-x86_64",
+            url="",
+            markdown_content=markdown_content,
+            links_to_external_services=None,
+        ).once()
     flexmock(celery_group).should_receive("apply_async").once()
 
     processing_results = SteveJobs().process_message(pr_embedded_command_comment_event)
@@ -1151,16 +1186,18 @@ def test_pr_test_command_handler_retries(
 
     assert json.dumps(event_dict)
     task = run_testing_farm_handler.__wrapped__.__func__
-    task(
-        flexmock(
-            request=flexmock(retries=retry_number, kwargs={}),
-            max_retries=DEFAULT_RETRY_LIMIT,
-        ),
-        package_config=package_config,
-        event=event_dict,
-        job_config=job_config,
-        testing_farm_target_id=None if retry_number == 0 else test_run.id,
+    task_args = {
+        "package_config": package_config,
+        "event": event_dict,
+        "job_config": job_config,
+        "testing_farm_target_id": None if retry_number == 0 else test_run.id,
+    }
+    celery_task = flexmock(
+        request=flexmock(retries=retry_number, kwargs={}),
+        max_retries=DEFAULT_RETRY_LIMIT,
     )
+
+    task(celery_task, **task_args)
 
 
 def test_pr_test_command_handler_skip_build_option(
@@ -1291,6 +1328,7 @@ def test_pr_test_command_handler_skip_build_option(
         ),
     )
 
+    urls.DASHBOARD_URL = "https://dashboard.localhost"
     flexmock(StatusReporter).should_receive("report").with_args(
         state=BaseCommitStatus.running,
         description="Submitting the tests ...",
@@ -1330,8 +1368,10 @@ def test_pr_test_command_handler_skip_build_option(
     flexmock(tft_test_run_model).should_receive("set_pipeline_id").with_args(
         pipeline_id,
     ).once()
+    flexmock(tft_test_run_model).should_receive("set_status").with_args(
+        TestingFarmResult.queued,
+    ).once()
 
-    urls.DASHBOARD_URL = "https://dashboard.localhost"
     flexmock(StatusReporter).should_receive("report").with_args(
         description="Tests have been submitted ...",
         state=BaseCommitStatus.running,
@@ -2378,6 +2418,9 @@ def test_pr_test_command_handler_multiple_builds(
     flexmock(tft_test_run_model_rawhide).should_receive("set_pipeline_id").with_args(
         pipeline_id,
     )
+    flexmock(tft_test_run_model_rawhide).should_receive("set_status").with_args(
+        TestingFarmResult.queued,
+    ).once()
 
     urls.DASHBOARD_URL = "https://dashboard.localhost"
     flexmock(StatusReporter).should_receive("report").with_args(
