@@ -6,7 +6,6 @@ from datetime import datetime
 
 import pytest
 from flexmock import flexmock
-from packit.config.common_package_config import Deployment
 
 from packit_service.config import ServiceConfig
 from packit_service.models import (
@@ -123,9 +122,6 @@ def test_logdetective_process_message(
     service_config.fedora_ci.enabled_projects = {logdetective_analysis_success_event["project_url"]}
     service_config.logdetective_enabled = True
 
-    # Set deployment to prod to disable guppy memory profiling logic
-    # which causes UnboundLocalError when guppy is missing.
-    service_config.deployment = Deployment.prod
     flexmock(ServiceConfig).should_receive("get_service_config").and_return(service_config)
 
     mock_service = flexmock(instance_url="https://github.com", hostname="github.com")
@@ -200,9 +196,6 @@ def test_logdetective_process_message_logdetective_disabled(
     service_config.fedora_ci.enabled_projects = {logdetective_analysis_success_event["project_url"]}
     service_config.logdetective_enabled = False
 
-    # Set deployment to prod to disable guppy memory profiling logic
-    # which causes UnboundLocalError when guppy is missing.
-    service_config.deployment = Deployment.prod
     flexmock(ServiceConfig).should_receive("get_service_config").and_return(service_config)
 
     # Ensure FedoraCIHelper.report is never called when LD is disabled
@@ -314,9 +307,6 @@ def test_logdetective_process_message_error(
     service_config.fedora_ci.enabled_projects = {logdetective_analysis_error_event["project_url"]}
     service_config.logdetective_enabled = True
 
-    # Set deployment to prod to disable guppy memory profiling logic
-    # which causes UnboundLocalError when guppy is missing.
-    service_config.deployment = Deployment.prod
     flexmock(ServiceConfig).should_receive("get_service_config").and_return(service_config)
 
     mock_service = flexmock(instance_url="https://github.com", hostname="github.com")

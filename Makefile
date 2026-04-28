@@ -72,32 +72,6 @@ check-in-container:
 		-v $(CURDIR)/files/packit-service.yaml:/root/.config/packit-service.yaml:Z \
 		$(TEST_IMAGE) make check "TEST_TARGET=$(TEST_TARGET)"
 
-# This is my target so don't touch it! :) How to:
-# * No dependencies - take care of them yourself
-# * Make sure to set `command_handler: local`: there is no kube API in pristine containers
-# * Make sure to `docker-compose up redis postgres`
-# Features:
-# * Can regen requre stuff (`TEST_TARGET=./tests_openshift/openshift_integration/`)
-# * Mounts your source code in the container
-# * Mounts secrets in the container: make sure all are valid
-# * Can touch redis and psql
-check-in-container-tomas:
-	@# don't use -ti here in CI, TTY is not allocated in zuul
-	$(CONTAINER_ENGINE) run --rm \
-		-v $(CURDIR):/src \
-		-v $(CURDIR)/packit_service:/usr/local/lib/python3.7/site-packages/packit_service:ro,z \
-		-v $(CURDIR)/secrets/packit/dev/packit-service.yaml:/home/packit/.config/packit-service.yaml:ro,z \
-		-v $(CURDIR)/secrets/packit/dev/fedora.keytab:/secrets/fedora.keytab:ro,z \
-		-v $(CURDIR)/secrets/packit/dev/private-key.pem:/secrets/private-key.pem:ro,z \
-		-v $(CURDIR)/secrets/packit/dev/fullchain.pem:/secrets/fullchain.pem:ro,z \
-		-v $(CURDIR)/secrets/packit/dev/privkey.pem:/secrets/privkey.pem:ro,z \
-		-w /src \
-		--security-opt label=disable \
-		-v $(CURDIR)/files/packit-service.yaml:/root/.config/packit-service.yaml \
-		-v $(CURDIR)/tests_openshift/openshift_integration/test_data/:/tmp/test_data/ \
-		--network packit-service_default \
-		$(TEST_IMAGE) make check "TEST_TARGET=$(TEST_TARGET)"
-
 # deploy a pod with tests and run them
 check-inside-openshift: service worker
 	@# http://timmurphy.org/2015/09/27/how-to-get-a-makefile-directory-path/
